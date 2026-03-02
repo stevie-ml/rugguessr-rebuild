@@ -60,7 +60,7 @@ export default function GameMap({ onGuess, actualLocation, guessLocation, disabl
 
     // CartoDB Voyager — clean, readable map with Latin-script labels.
     // Free, no API key, no rate limits for reasonable use.
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 19,
@@ -182,11 +182,6 @@ export default function GameMap({ onGuess, actualLocation, guessLocation, disabl
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full rounded-lg" />
-      {!disabled && selectedPos && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-black/70 text-white text-sm px-3 py-1 rounded-full">
-          Click map to move pin
-        </div>
-      )}
     </div>
   );
 }
