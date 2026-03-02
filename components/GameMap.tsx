@@ -35,7 +35,7 @@ export default function GameMap({ onGuess, actualLocation, guessLocation, disabl
     className: 'actual-pin',
     html: `<svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
       <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26s18-12.5 18-26C36 8.06 27.94 0 18 0z" fill="#2ecc71" stroke="#27ae60" stroke-width="1"/>
-      <text x="18" y="22" text-anchor="middle" font-size="18">🏁</text>
+      <text x="18" y="22" text-anchor="middle" font-size="18">&#x1F3C1;</text>
     </svg>`,
     iconSize: [36, 44],
     iconAnchor: [18, 44],
@@ -58,9 +58,11 @@ export default function GameMap({ onGuess, actualLocation, guessLocation, disabl
       worldCopyJump: true,
     });
 
-    // Use OpenStreetMap tiles (Latin alphabet names)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // CartoDB Voyager — clean, readable map with Latin-script labels.
+    // Free, no API key, no rate limits for reasonable use.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map);
 

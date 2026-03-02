@@ -8,10 +8,17 @@ interface RugPanelProps {
   showDetails: boolean;
   distanceKm?: number;
   score?: number;
+  onImageError?: () => void;
 }
 
-export default function RugPanel({ rug, showDetails, distanceKm, score }: RugPanelProps) {
+export default function RugPanel({ rug, showDetails, distanceKm, score, onImageError }: RugPanelProps) {
   const [zoomed, setZoomed] = useState(false);
+  const [imgBroken, setImgBroken] = useState(false);
+
+  const handleImageError = () => {
+    setImgBroken(true);
+    onImageError?.();
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -20,30 +27,45 @@ export default function RugPanel({ rug, showDetails, distanceKm, score }: RugPan
         className={`relative cursor-pointer overflow-hidden rounded-lg bg-neutral-900 ${
           zoomed ? 'fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 p-4' : 'flex-1 min-h-0'
         }`}
-        onClick={() => setZoomed(!zoomed)}
+        onClick={() => !imgBroken && setZoomed(!zoomed)}
       >
-        <img
-          src={rug.imageUrl}
-          alt={rug.title}
-          className={`${
-            zoomed
-              ? 'max-w-full max-h-full object-contain'
-              : 'w-full h-full object-contain'
-          }`}
-          loading="eager"
-        />
-        {!zoomed && (
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-            Click to zoom
+        {imgBroken ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-neutral-500">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 16l5-5 4 4 4-4 5 5" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+            </svg>
+            <p className="text-sm">Image unavailable</p>
+            <p className="text-xs text-neutral-600">Loading next rug...</p>
           </div>
-        )}
-        {zoomed && (
-          <button
-            className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white text-2xl w-10 h-10 rounded-full flex items-center justify-center"
-            onClick={(e) => { e.stopPropagation(); setZoomed(false); }}
-          >
-            &times;
-          </button>
+        ) : (
+          <>
+            <img
+              src={rug.imageUrl}
+              alt={rug.title}
+              className={`${
+                zoomed
+                  ? 'max-w-full max-h-full object-contain'
+                  : 'w-full h-full object-contain'
+              }`}
+              loading="eager"
+              onError={handleImageError}
+            />
+            {!zoomed && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                Click to zoom
+              </div>
+            )}
+            {zoomed && (
+              <button
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white text-2xl w-10 h-10 rounded-full flex items-center justify-center"
+                onClick={(e) => { e.stopPropagation(); setZoomed(false); }}
+              >
+                &times;
+              </button>
+            )}
+          </>
         )}
       </div>
 

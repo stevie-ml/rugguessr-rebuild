@@ -149,6 +149,12 @@ export default function Home() {
     }
   }, [round, loadRound]);
 
+  // Auto-skip when a rug's image fails to load
+  const handleImageError = useCallback(() => {
+    console.warn('Rug image failed to load, skipping to next...');
+    setTimeout(() => loadRound(), 500);
+  }, [loadRound]);
+
   // Start screen
   if (phase === 'start') {
     return (
@@ -240,6 +246,7 @@ export default function Home() {
               showDetails={phase === 'result'}
               distanceKm={currentDistance ?? undefined}
               score={currentScore ?? undefined}
+              onImageError={phase === 'guessing' ? handleImageError : undefined}
             />
           )}
         </div>

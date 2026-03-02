@@ -48,42 +48,43 @@ async function refreshPool(): Promise<void> {
       }
     }
 
-    // LLM validation pass - validate rugs that don't have coordinates from known locations
+    // Strict provenance filter: only include rugs with a real location name,
+    // an image URL, and resolvable coordinates.
     const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
     const validated: Rug[] = [];
 
     for (const rug of allRugs) {
-      // Quick heuristic check first
+      // Must have a meaningful provenance string and an image
+      if (!rug.location?.name || rug.location.name.trim().length < 3) continue;
+      if (!rug.imageUrl) continue;
+
+      // Quick heuristic: known rug-producing location?
       const knownCoords = lookupLocation(rug.location.name);
       if (knownCoords) {
-        // Known location - use our coordinates (more reliable)
         rug.location.lat = knownCoords.lat;
         rug.location.lng = knownCoords.lng;
         validated.push(rug);
         continue;
       }
 
-      // If coordinates come from the source API (like Wikidata), validate with LLM
+      // LLM validation for unknown locations
       if (hasApiKey && validated.length < 80) {
         try {
           const result = await validateWithLLM(rug.title, rug.location.name, rug.culture);
-          if (result.isRug && result.isSpecific) {
-            if (result.lat && result.lng) {
-              rug.location.lat = result.lat;
-              rug.location.lng = result.lng;
-            }
+          if (result.isRug && result.isSpecific && result.lat && result.lng) {
+            rug.location.lat = result.lat;
+            rug.location.lng = result.lng;
             validated.push(rug);
           } else {
             console.log(`LLM rejected: "${rug.title}" (${rug.location.name}) - ${result.reason}`);
           }
         } catch {
-          // If LLM fails, include rug if it has coordinates
+          // LLM failed — only include if it already has valid coordinates
           if (rug.location.lat && rug.location.lng) {
             validated.push(rug);
           }
         }
       } else if (rug.location.lat && rug.location.lng) {
-        // No API key but has coordinates from source - include it
         validated.push(rug);
       }
     }
