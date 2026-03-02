@@ -195,19 +195,20 @@ export async function validateWithLLM(
         messages: [
           {
             role: 'user',
-            content: `You are helping filter items for a geography guessing game about rugs and carpets.
+            content: `You are helping filter items for a geography guessing game about rugs and carpets. The game asks players to guess WHERE a rug was MANUFACTURED/WOVEN — not where it is currently held.
 
 Given this museum item:
 - Title: "${title}"
-- Provenance/Origin: "${provenance}"
+- Stated origin/location: "${provenance}"
 ${culture ? `- Culture: "${culture}"` : ''}
 
-Answer these questions in JSON format:
-1. "isRug": Is this actually a rug, carpet, kilim, or flatweave floor covering? (not a painting of rugs, not a textile fragment, not clothing, not a bag, not furniture)
-2. "isSpecific": Is the provenance specific enough to be clicked on a map? A city or well-known rug-producing district is specific enough. A whole country, broad region, continent, or purely ethnic/tribal designation is NOT specific enough. Examples: "Tabriz" = specific, "Turkey" = not specific, "Shirvan" = specific, "Caucasus" = not specific, "Kazak" = not specific (tribal), "Heriz" = specific.
-3. "lat": If isSpecific is true, provide the latitude of this location
-4. "lng": If isSpecific is true, provide the longitude of this location
-5. "reason": Brief explanation
+Answer in JSON:
+1. "isRug": Is this actually a rug, carpet, kilim, or flatweave? (not a painting, textile fragment, clothing, bag, or furniture)
+2. "isManufactureOrigin": Does the stated origin refer to WHERE THE RUG WAS MADE (a weaving city/district)? Answer false if the stated origin is a museum name, gallery, collection, auction house, dealer, collector, or the city where the museum is located rather than where the rug was woven. Examples: "David Collection" = false (that's a museum in Copenhagen), "Tabriz" = true (rug-weaving city), "Metropolitan Museum" = false, "Heriz" = true, "Sotheby's" = false, "V&A" = false, "Konya" = true.
+3. "isSpecific": Is the manufacturing location specific enough to pin on a map? A city or well-known rug-producing district = yes. A whole country, broad region, continent, or tribal/ethnic name = no. "Tabriz" = yes, "Turkey" = no, "Caucasus" = no, "Kazak" = no (tribal).
+4. "lat": If isManufactureOrigin AND isSpecific, latitude of the manufacturing location
+5. "lng": If isManufactureOrigin AND isSpecific, longitude of the manufacturing location
+6. "reason": Brief explanation
 
 Respond ONLY with valid JSON, no other text.`,
           },
@@ -231,7 +232,7 @@ Respond ONLY with valid JSON, no other text.`,
 
     const parsed = JSON.parse(jsonMatch[0]);
     return {
-      isSpecific: parsed.isSpecific === true,
+      isSpecific: parsed.isManufactureOrigin === true && parsed.isSpecific === true,
       isRug: parsed.isRug === true,
       lat: typeof parsed.lat === 'number' ? parsed.lat : undefined,
       lng: typeof parsed.lng === 'number' ? parsed.lng : undefined,

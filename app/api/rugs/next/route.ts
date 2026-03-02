@@ -48,17 +48,18 @@ async function refreshPool(): Promise<void> {
       }
     }
 
-    // Strict provenance filter: only include rugs with a real location name,
-    // an image URL, and resolvable coordinates.
+    // Strict provenance filter.
+    // A rug is only included if we can confidently say WHERE IT WAS MADE.
+    // Museum/collection locations (e.g. "David Collection" → Copenhagen) are rejected.
     const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
     const validated: Rug[] = [];
 
     for (const rug of allRugs) {
-      // Must have a meaningful provenance string and an image
+      // Must have a provenance string and an image
       if (!rug.location?.name || rug.location.name.trim().length < 3) continue;
       if (!rug.imageUrl) continue;
 
-      // Quick heuristic: known rug-producing location?
+      // Known rug-producing location? Auto-accept with our coordinates.
       const knownCoords = lookupLocation(rug.location.name);
       if (knownCoords) {
         rug.location.lat = knownCoords.lat;
@@ -67,7 +68,8 @@ async function refreshPool(): Promise<void> {
         continue;
       }
 
-      // LLM validation for unknown locations
+      // NOT a known rug-producing location — LLM must validate.
+      // This catches museum names, collection names, and vague origins.
       if (hasApiKey && validated.length < 80) {
         try {
           const result = await validateWithLLM(rug.title, rug.location.name, rug.culture);
@@ -79,14 +81,12 @@ async function refreshPool(): Promise<void> {
             console.log(`LLM rejected: "${rug.title}" (${rug.location.name}) - ${result.reason}`);
           }
         } catch {
-          // LLM failed — only include if it already has valid coordinates
-          if (rug.location.lat && rug.location.lng) {
-            validated.push(rug);
-          }
+          // LLM call failed — skip this rug rather than guessing
+          console.log(`LLM error, skipping: "${rug.title}" (${rug.location.name})`);
         }
-      } else if (rug.location.lat && rug.location.lng) {
-        validated.push(rug);
       }
+      // No API key and not a known location → exclude entirely.
+      // We refuse to guess — better to have fewer rugs than wrong ones.
     }
 
     // Shuffle the pool

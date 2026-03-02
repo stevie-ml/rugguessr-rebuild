@@ -27,14 +27,11 @@ WHERE {
   # Must have an image
   ?item wdt:P18 ?image .
 
-  # Must have a place of origin or creation with coordinates
-  {
-    ?item wdt:P1071 ?place .  # location of creation
-  } UNION {
-    ?item wdt:P495 ?place .  # country of origin (less preferred)
-  } UNION {
-    ?item wdt:P276 ?place .  # location
-  }
+  # Must have a place of creation with coordinates.
+  # P1071 = location of creation (where it was MADE).
+  # P276 (location) is deliberately excluded — it returns the museum, not the origin.
+  # P495 (country of origin) is excluded — too broad for map-pinning.
+  ?item wdt:P1071 ?place .
   ?place wdt:P625 ?coords .
   BIND(geof:latitude(?coords) AS ?placeLat)
   BIND(geof:longitude(?coords) AS ?placeLon)
